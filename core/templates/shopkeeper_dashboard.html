@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Shopkeeper Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Shopkeeper Dashboard</h1>
+            <p class="text-muted">Welcome back, {{ request.user.get_full_name|default:request.user.username }}</p>
+        </div>
+        <div>
+            <a href="{% url 'add_sale' %}" class="btn btn-primary">
+                <i class="fas fa-cart-plus mr-2"></i>New Sale
+            </a>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row">
+        <!-- Today's Sales -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Today's Sales</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ sales_today.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Sales -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Weekly Sales</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ sales_week.count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-week fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Items -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Status -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Stock Edit Permission</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if can_edit_stock %}
+                                <span class="text-success">Enabled</span>
+                                {% else %}
+                                <span class="text-danger">Disabled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-key fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Today's Sales Table -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Sales</h6>
+                    <a href="{% url 'manage_sales' %}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if sales_today %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>Customer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in sales_today|slice:":5" %}
+                                <tr>
+                                    <td>{{ sale.timestamp|time:"H:i" }}</td>
+                                    <td>{{ sale.product.name }}</td>
+                                    <td>{{ sale.quantity_sold }}</td>
+                                    <td>{{ sale.amount_paid }}</td>
+                                    <td>
+                                        <span class="badge 
+                                        {% if sale.mode == 'cash' %}badge-success
+                                        {% elif sale.mode == 'momo' %}badge-primary
+                                        {% else %}badge-info{% endif %}">
+                                            {{ sale.mode|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ sale.customer_name|default:"--" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <img src="https://via.placeholder.com/80" alt="No sales" class="mb-3 opacity-50">
+                        <p class="text-muted">No sales recorded today</p>
+                        <a href="{% url 'add_sale' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus-circle mr-1"></i> Add First Sale
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions & Low Stock -->
+        <div class="col-lg-4">
+            <!-- Quick Actions Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'add_sale' %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-cart-plus mb-1"></i><br>New Sale
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'manage_sales' %}" class="btn btn-info btn-block">
+                                <i class="fas fa-list-alt mb-1"></i><br>Sales Log
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'manage_inventory' %}" class="btn btn-success btn-block">
+                                <i class="fas fa-boxes mb-1"></i><br>Inventory
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="#" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#helpModal">
+                                <i class="fas fa-question-circle mb-1"></i><br>Help
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Low Stock Items Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">Low Stock Items</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for item in inventory %}
+                            {% if item.stock < item.low_stock_threshold %}
+                                <div class="list-group-item p-2">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ item.name }}</h6>
+                                            <div class="progress" style="height: 5px; width: 100px;">
+                                                <div class="progress-bar bg-danger" role="progressbar" 
+                                                    style="width: {{ item.stock|floatformat:0|default:0 }}%;" 
+                                                    aria-valuenow="{{ item.stock }}" aria-valuemin="0" 
+                                                    aria-valuemax="{{ item.low_stock_threshold }}"></div>
+                                            </div>
+                                        </div>
+                                        <span class="badge badge-danger">{{ item.stock }} left</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% empty %}
+                            <div class="text-center py-3">
+                                <p class="text-muted mb-0">No low stock items</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Sales Overview -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Weekly Sales Overview</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Export Options:</div>
+                            <a class="dropdown-item" href="#"><i class="fas fa-file-csv mr-2"></i>CSV</a>
+                            <a class="dropdown-item" href="#"><i class="fas fa-file-pdf mr-2"></i>PDF</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'manage_sales' %}">View All Sales</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="weeklySalesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+<script>
+    // Process sales data for chart
+    $(document).ready(function() {
+        // Sample data (in production, you'd get this from your Django view)
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        
+        // Get current day index (0-6, where 0 is Monday)
+        const today = new Date();
+        const dayOfWeek = (today.getDay() + 6) % 7; // Convert Sunday=0 to Sunday=6
+        
+        // Generate sample data with actual day names
+        const salesData = [];
+        const labels = [];
+        
+        // Get past 7 days in correct order
+        for (let i = 6; i >= 0; i--) {
+            const dayIndex = (dayOfWeek - i + 7) % 7;
+            labels.push(days[dayIndex]);
+            
+            // Random data for demonstration - replace with actual data from Django
+            // You can pass this data from your view using JSON
+            salesData.push(Math.floor(Math.random() * 15) + 1);
+        }
+        
+        // Chart configuration
+        const ctx = document.getElementById('weeklySalesChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sales',
+                    data: salesData,
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointBorderColor: 'rgba(78, 115, 223, 1)',
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointHoverBorderColor: 'rgba(220, 220, 220, 1)',
+                    pointHitRadius: 10,
+                    pointBorderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 25,
+                        top: 25,
+                        bottom: 0
+                    }
+                },
+                scales: {
+                    xAxes: [{
+                        gridLines: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 7
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            maxTicksLimit: 5,
+                            padding: 10,
+                            beginAtZero: true
+                        },
+                        gridLines: {
+                            color: "rgb(234, 236, 244)",
+                            zeroLineColor: "rgb(234, 236, 244)",
+                            drawBorder: false,
+                            borderDash: [2],
+                            zeroLineBorderDash: [2]
+                        }
+                    }]
+                },
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    titleMarginBottom: 10,
+                    titleFontColor: '#6e707e',
+                    titleFontSize: 14,
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    intersect: false,
+                    mode: 'index',
+                    caretPadding: 10,
+                    callbacks: {
+                        label: function(tooltipItem, chart) {
+                            return 'Sales: ' + tooltipItem.yLabel;
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

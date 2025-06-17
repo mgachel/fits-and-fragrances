@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: fits-inventory
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    startCommand: |
+      cd /opt/render/project/src
+      export PYTHONPATH=$PYTHONPATH:/opt/render/project/src
+      gunicorn fits_and_fragrances_manager.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: fits_and_fragrances_manager.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+    healthCheckPath: /admin/
+    autoDeploy: true

@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Log - Shop Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Base styles */
+    .sales-table {
+        font-size: 0.9rem;
+    }
+
+    .sales-table th {
+        background-color: var(--secondary-color);
+        color: white;
+        font-weight: 500;
+    }
+
+    .filter-card {
+        margin-bottom: 1.5rem;
+    }
+
+    .sales-table .badge {
+        font-size: 85%;
+        padding: 0.4em 0.6em;
+    }
+
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .filter-form .form-control {
+        border-radius: 5px;
+    }
+
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        margin-right: 5px;
+    }
+    
+    .action-buttons .btn:last-child {
+        margin-right: 0;
+    }
+
+    .sales-stats {
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        height: 100%;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+    }
+
+    /* Badge colors for payment modes */
+    .badge-cash { background-color: #6c757d; color: white; }
+    .badge-momo { background-color: #007bff; color: white; }
+    .badge-banktransfer { background-color: #17a2b8; color: white; }
+    
+    /* Card header action buttons */
+    .card-header .btn {
+        font-size: 0.9rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .sales-stats .col-md-3 {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+        
+        .filter-form .col-md-4 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .filter-form button {
+            margin-top: 1rem;
+        }
+        
+        .action-buttons .btn {
+            margin-right: 2px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .sales-stats .col-md-3 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-light rounded-pill p-2">
+            <li class="breadcrumb-item"><a href="{% url 'owner_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Sales Log</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 text-primary"><i class="fas fa-list-alt mr-2"></i>Sales Log</h4>
+        <a href="{% url 'add_sale' %}" class="btn btn-primary btn-sm shadow-sm">
+            <i class="fas fa-plus mr-1"></i> New Sale
+        </a>
+    </div>
+
+    <div class="row sales-stats">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card p-3 d-flex align-items-center">
+                <div class="stats-icon bg-primary text-white">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Total Sales</h6>
+                    <h4 class="mb-0">{{ sales.count }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card p-3 d-flex align-items-center">
+                <div class="stats-icon bg-success text-white">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Total Revenue</h6>
+                    <h4 class="mb-0">${{ total_revenue|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card p-3 d-flex align-items-center">
+                <div class="stats-icon bg-warning text-white">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Today's Revenue</h6>
+                    <h4 class="mb-0">${{ daily_revenue|floatformat:2 }}</h4>
+                    {% if user.is_owner %}
+                    <h6 class="mb-0 text-muted">Today's Profit</h6>
+                    <h4 class="mb-0">${{ daily_profit|floatformat:2 }}</h4>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% if user.is_owner %}
+        <div class="col-md-3 mb-3">
+            <div class="stats-card p-3 d-flex align-items-center">
+                <div class="stats-icon bg-info text-white">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">This Month's Revenue</h6>
+                    <h4 class="mb-0">${{ monthly_revenue|floatformat:2 }}</h4>
+                    <h6 class="mb-0 text-muted">This Month's Profit</h6>
+                    <h4 class="mb-0">${{ monthly_profit|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-md-3 mb-3">
+            <div class="stats-card p-3 d-flex align-items-center">
+                <div class="stats-icon bg-secondary text-white">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 text-muted">Sales Today</h6>
+                    <h4 class="mb-0">{{ today_sales_count }}</h4>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card filter-card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-filter mr-2 text-secondary"></i>Filter Sales</h5>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#filterBody" aria-expanded="true" aria-controls="filterBody">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        <div id="filterBody" class="collapse show">
+            <div class="card-body">
+                <form class="filter-form" method="get" action="{% url 'manage_sales' %}">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ filter_date|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="customer_name" class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" placeholder="Enter customer name" value="{{ customer_name_filter|default:'' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="shopkeeper" class="form-label">Shopkeeper</label>
+                            <select class="form-control" id="shopkeeper" name="shopkeeper">
+                                <option value="">All Shopkeepers</option>
+                                {% for shopkeeper in shopkeepers %}
+                                    <option value="{{ shopkeeper.username }}" {% if shopkeeper_filter == shopkeeper.username %}selected{% endif %}>
+                                        {{ shopkeeper.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="branch" class="form-label">Branch</label>
+                            <select class="form-control" id="branch" name="branch">
+                                <option value="">All Branches</option>
+                                {% for branch in branches %}
+                                    <option value="{{ branch.name }}" {% if branch_filter == branch.name %}selected{% endif %}>
+                                        {{ branch.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary mr-2">
+                                <i class="fas fa-search mr-1"></i> Apply Filter
+                            </button>
+                            <a href="{% url 'manage_sales' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo mr-1"></i> Reset Filters
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Sales Records</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-primary mr-2" id="exportButton">
+                    <i class="fas fa-file-export mr-1"></i> Export
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="printButton">
+                    <i class="fas fa-print mr-1"></i> Print
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if sales %}
+            <div class="table-responsive">
+                <table class="table table-hover sales-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Contact</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Amount Paid</th>
+                            <th>Balance</th>
+                            <th>Payment Mode</th>
+                            <th>Shopkeeper</th>
+                            <th>Branch</th>
+                            <th>Date & Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td>{{ sale.customer_name|default:"N/A" }}</td>
+                            <td>{{ sale.customer_contact_details|default:"N/A" }}</td>
+                            <td>{{ sale.product.name }}</td>
+                            <td>{{ sale.quantity_sold }}</td>
+                            <td>${{ sale.amount_paid|floatformat:2 }}</td>
+                            <td>
+                                {% if sale.amount_left > 0 %}
+                                <span class="badge badge-warning">${{ sale.amount_left|floatformat:2 }}</span>
+                                {% else %}
+                                <span class="badge badge-success">Paid</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sale.mode == "cash" %}
+                                <span class="badge badge-cash">Cash</span>
+                                {% elif sale.mode == "momo" %}
+                                <span class="badge badge-momo">Momo</span>
+                                {% elif sale.mode == "bank transfer" %}
+                                <span class="badge badge-banktransfer">Bank Transfer</span>
+                                {% else %}
+                                <span class="badge badge-dark">{{ sale.mode }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sale.shopkeeper.username|default:"N/A" }}</td>
+                            <td>{{ sale.branch.name|default:"N/A" }}</td>
+                            <td>{{ sale.timestamp|date:"M d, Y, g:i a" }}</td>
+                            <td class="action-buttons">
+                                <a href="{% url 'view_sales' sale.id %}" class="btn btn-sm btn-info" data-toggle="tooltip" title="View Details">
+                                     <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'edit_sale' sale.id %}" class="btn btn-sm btn-primary" data-toggle="tooltip" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if user.is_owner %}
+                                <a href="{% url 'delete_sale' sale.id %}" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Delete" onclick="return confirm('Are you sure you want to delete this sale record?');">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <h5>No Sales Found</h5>
+                <p class="text-muted">No sales records match your current filter criteria.</p>
+                <a href="{% url 'manage_sales' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-redo mr-1"></i> Reset Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% if sales %}
+        <div class="card-footer bg-light">
+            <nav aria-label="Sales pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if sales.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ sales.previous_page_number }}&date={{ filter_date|date:'Y-m-d' }}&customer_name={{ customer_name_filter|default:'' }}&shopkeeper={{ shopkeeper_filter|default:'' }}&branch={{ branch_filter|default:'' }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in sales.paginator.page_range %}
+                        {% if sales.number == i %}
+                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}&date={{ filter_date|date:'Y-m-d' }}&customer_name={{ customer_name_filter|default:'' }}&shopkeeper={{ shopkeeper_filter|default:'' }}&branch={{ branch_filter|default:'' }}">{{ i }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if sales.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ sales.next_page_number }}&date={{ filter_date|date:'Y-m-d' }}&customer_name={{ customer_name_filter|default:'' }}&shopkeeper={{ shopkeeper_filter|default:'' }}&branch={{ branch_filter|default:'' }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        // Print functionality
+        $('#printButton').click(function() {
+            window.print();
+        });
+        
+        // Export functionality
+        $('#exportButton').click(function() {
+            // Create a form to submit the current filter parameters to an export endpoint
+            let form = $('<form></form>');
+            form.attr('method', 'GET');
+            form.attr('action', '/download-sales-report/'); // You would need to add this URL to urls.py
+            
+            // Append current filters
+            form.append($('<input>').attr({
+                type: 'hidden',
+                name: 'date',
+                value: $('#date').val()
+            }));
+            
+            form.append($('<input>').attr({
+                type: 'hidden',
+                name: 'customer_name',
+                value: $('#customer_name').val()
+            }));
+            
+            form.append($('<input>').attr({
+                type: 'hidden',
+                name: 'shopkeeper',
+                value: $('#shopkeeper').val()
+            }));
+            
+            form.append($('<input>').attr({
+                type: 'hidden',
+                name: 'branch',
+                value: $('#branch').val()
+            }));
+            
+            $(document.body).append(form);
+            form.submit();
+            form.remove();
+        });
+        
+        // Handle filter collapse toggle icon
+        $('#filterBody').on('show.bs.collapse hide.bs.collapse', function () {
+            $('#filterBody').prev().find('i.fas').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add New Sale - Shop Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .calculation-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .product-info {
+        display: none;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    #productImage {
+        max-height: 150px;
+        object-fit: contain;
+    }
+
+    .payment-method-option {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .payment-method-option:hover {
+        transform: translateY(-2px);
+    }
+
+    .payment-method-option.selected {
+        border-color: var(--primary-color);
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+
+    .payment-method-option .payment-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Add New Sale</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'shopkeeper_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'manage_sales' %}">Sales</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add Sale</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{% url 'manage_sales' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Sales
+        </a>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Form Column -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Sale Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="saleForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Product Selection -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.product.id_for_label }}">
+                                        <i class="fas fa-box mr-1"></i>Product <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.product }}
+                                    {% if form.product.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.product.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Quantity -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.quantity_sold.id_for_label }}">
+                                        <i class="fas fa-sort-numeric-up mr-1"></i>Quantity <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.quantity_sold }}
+                                    {% if form.quantity_sold.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.quantity_sold.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Info Box (appears when product is selected) -->
+                        <div class="product-info mb-4 p-3 border rounded">
+                            <div class="row align-items-center">
+                                <div class="col-md-3 text-center">
+                                    <img id="productImage" src="{% static 'images/product-placeholder.png' %}" alt="Product" class="img-fluid">
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <p class="mb-1"><strong>Price:</strong> <span id="productPrice" class="text-primary">$0.00</span></p>
+                                            <p class="mb-1"><strong>Current Stock:</strong> <span id="productStock" class="text-info">0</span></p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-1"><strong>Branch:</strong> <span id="productBranch">N/A</span></p>
+                                            <p class="mb-1"><strong>Total Price:</strong> <span id="totalPrice" class="font-weight-bold">$0.00</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Customer Information -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.customer_name.id_for_label }}">
+                                        <i class="fas fa-user mr-1"></i>Customer Name
+                                    </label>
+                                    {{ form.customer_name }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.customer_contact_details.id_for_label }}">
+                                        <i class="fas fa-phone mr-1"></i>Customer Contact
+                                    </label>
+                                    {{ form.customer_contact_details }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Section -->
+                        <h5 class="mt-4 mb-3">Payment Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label class="d-block">Payment Method <span class="text-danger">*</span></label>
+                                <div class="d-flex flex-wrap">
+                                    {% for value, name in form.mode.field.choices %}
+                                    <div class="payment-method-option card text-center mb-2 mr-2" style="width: 120px; height: 100px;" data-value="{{ value }}">
+                                        <div class="card-body p-2 d-flex flex-column justify-content-center align-items-center">
+                                            <div class="payment-icon">
+                                                {% if value == 'cash' %}
+                                                <i class="fas fa-money-bill-wave text-success"></i>
+                                                {% elif value == 'momo' %}
+                                                <i class="fas fa-mobile-alt text-primary"></i>
+                                                {% elif value == 'bank transfer' %}
+                                                <i class="fas fa-university text-info"></i>
+                                                {% endif %}
+                                            </div>
+                                            <p class="card-text mb-0">{{ name }}</p>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {{ form.mode }}
+                                {% if form.mode.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.mode.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.amount_paid.id_for_label }}">
+                                        <i class="fas fa-dollar-sign mr-1"></i>Amount Paid <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.amount_paid }}
+                                    {% if form.amount_paid.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.amount_paid.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.amount_left.id_for_label }}">
+                                        <i class="fas fa-hand-holding-usd mr-1"></i>Amount Left <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.amount_left }}
+                                    {% if form.amount_left.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.amount_left.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save mr-2"></i>Complete Sale
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Summary Column -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Sale Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="calculation-box p-3 mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Product:</span>
+                            <span id="summaryProduct">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Price per Unit:</span>
+                            <span id="summaryPrice">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Quantity:</span>
+                            <span id="summaryQuantity">0</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span id="summarySubtotal">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Payment Method:</span>
+                            <span id="summaryPaymentMethod">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between font-weight-bold">
+                            <span>Total Amount:</span>
+                            <span id="summaryTotal">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <small>This sale will be recorded under your account ({{ request.user.username }}).</small>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <small>Once a sale is completed, the product stock will be automatically adjusted.</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Help</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-question-circle mr-2"></i>How to use:</h6>
+                        <ol class="pl-3">
+                            <li>Select a product from the dropdown</li>
+                            <li>Enter the quantity being sold</li>
+                            <li>Add customer details (optional)</li>
+                            <li>Select payment method</li>
+                            <li>Enter amount paid and balance</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize product select with select2
+        $('#{{ form.product.id_for_label }}').select2({
+            placeholder: "Select a product",
+            width: '100%',
+            theme: 'bootstrap4'
+        });
+        
+        // Initialize hidden fields
+        $('#{{ form.mode.id_for_label }}').hide();
+        
+        // Handle payment method selection
+        $('.payment-method-option').click(function() {
+            $('.payment-method-option').removeClass('selected');
+            $(this).addClass('selected');
+            $('#{{ form.mode.id_for_label }}').val($(this).data('value'));
+            $('#summaryPaymentMethod').text($(this).find('.card-text').text());
+        });
+        
+        // Product selection changed
+        $('#{{ form.product.id_for_label }}').change(function() {
+            const productId = $(this).val();
+            if (productId) {
+                // In a real application, you would make an AJAX call to get product data
+                // For this template, we'll simulate product data
+                fetchProductDetails(productId);
+            } else {
+                $('.product-info').fadeOut();
+                resetCalculations();
+            }
+        });
+        
+        // Quantity changed
+        $('#{{ form.quantity_sold.id_for_label }}').on('input', function() {
+            calculateTotals();
+        });
+        
+        // Amount paid changed
+        $('#{{ form.amount_paid.id_for_label }}').on('input', function() {
+            calculateBalance();
+        });
+        
+        // Simulate fetching product details (in a real app, this would be an AJAX call)
+        function fetchProductDetails(productId) {
+            // This is a mock function that simulates getting product details
+            // In a real app, you would make an AJAX call to your server
+            
+            // Simulate loading delay
+            setTimeout(function() {
+                // Show product info box
+                $('.product-info').fadeIn();
+                
+                // For this template, we'll use dummy data
+                // In a real app, this would come from your server
+                const productName = $('#{{ form.product.id_for_label }} option:selected').text();
+                const price = Math.random() * 100 + 10; // Random price between 10 and 110
+                const stock = Math.floor(Math.random() * 50) + 1; // Random stock between 1 and 50
+                const branch = "Main Branch"; // Example branch name
+                
+                // Update product info display
+                $('#productPrice').text('$' + price.toFixed(2));
+                $('#productStock').text(stock);
+                $('#productBranch').text(branch);
+                
+                // Update summary
+                $('#summaryProduct').text(productName);
+                $('#summaryPrice').text('$' + price.toFixed(2));
+                
+                // Calculate totals
+                calculateTotals();
+            }, 300);
+        }
+        
+        function calculateTotals() {
+            const price = parseFloat($('#productPrice').text().replace('$', '')) || 0;
+            const quantity = parseInt($('#{{ form.quantity_sold.id_for_label }}').val()) || 0;
+            const total = price * quantity;
+            
+            // Update displays
+            $('#totalPrice').text('$' + total.toFixed(2));
+            $('#summaryQuantity').text(quantity);
+            $('#summarySubtotal').text('$' + total.toFixed(2));
+            $('#summaryTotal').text('$' + total.toFixed(2));
+            
+            // Handle amount paid and balance
+            calculateBalance();
+        }
+        
+        function calculateBalance() {
+            const total = parseFloat($('#summaryTotal').text().replace('$', '')) || 0;
+            const amountPaid = parseFloat($('#{{ form.amount_paid.id_for_label }}').val()) || 0;
+            const balance = total - amountPaid;
+            
+            // Update balance field
+            $('#{{ form.amount_left.id_for_label }}').val(balance.toFixed(2));
+        }
+        
+        function resetCalculations() {
+            $('#productPrice').text('$0.00');
+            $('#productStock').text('0');
+            $('#productBranch').text('N/A');
+            $('#totalPrice').text('$0.00');
+            $('#summaryProduct').text('-');
+            $('#summaryPrice').text('$0.00');
+            $('#summaryQuantity').text('0');
+            $('#summarySubtotal').text('$0.00');
+            $('#summaryTotal').text('$0.00');
+            $('#summaryPaymentMethod').text('-');
+        }
+        
+        // Apply Bootstrap form styling
+        $('.form-control').addClass('rounded-lg');
+        
+        // Form validation before submit
+        $('#saleForm').submit(function(event) {
+            const product = $('#{{ form.product.id_for_label }}').val();
+            const quantity = $('#{{ form.quantity_sold.id_for_label }}').val();
+            const mode = $('#{{ form.mode.id_for_label }}').val();
+            const amountPaid = $('#{{ form.amount_paid.id_for_label }}').val();
+            
+            if (!product || !quantity || !mode || !amountPaid) {
+                event.preventDefault();
+                alert('Please fill in all required fields!');
+            }
+            
+            const stock = parseInt($('#productStock').text());
+            if (parseInt(quantity) > stock) {
+                event.preventDefault();
+                alert('Error: Quantity exceeds available stock!');
+            }
+        });
+    });
+</script>
+{% endblock %}

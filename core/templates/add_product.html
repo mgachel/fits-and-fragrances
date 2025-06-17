@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add New Product - Shop Management System{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    .form-section {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .input-help-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .price-input-group {
+        position: relative;
+    }
+
+    .price-input-group .form-control {
+        padding-left: 28px;
+    }
+
+    .price-input-group .currency-symbol {
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 10;
+    }
+
+    .profit-indicator {
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+
+    .profit-positive {
+        background-color: rgba(46, 204, 113, 0.1);
+        color: #27ae60;
+        border-left: 3px solid #27ae60;
+    }
+
+    .profit-negative {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #c0392b;
+        border-left: 3px solid #c0392b;
+    }
+
+    .profit-neutral {
+        background-color: rgba(241, 196, 15, 0.1);
+        color: #f39c12;
+        border-left: 3px solid #f39c12;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Add New Product</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'owner_dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'manage_inventory' %}">Inventory</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add Product</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{% url 'manage_inventory' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Inventory
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Form Column -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Product Information</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="productForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Product Name -->
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}">
+                                        <i class="fas fa-tag mr-1"></i>Product Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="input-help-text">Enter a unique, descriptive name for the product</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Branch -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.branch.id_for_label }}">
+                                        <i class="fas fa-store mr-1"></i>Branch <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.branch }}
+                                    {% if form.branch.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.branch.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Initial Stock -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.stock.id_for_label }}">
+                                        <i class="fas fa-cubes mr-1"></i>Initial Stock <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.stock }}
+                                    {% if form.stock.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.stock.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="input-help-text">Current quantity available</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Low Stock Threshold -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.low_stock_threshold.id_for_label }}">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>Low Stock Alert
+                                    </label>
+                                    {{ form.low_stock_threshold }}
+                                    {% if form.low_stock_threshold.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.low_stock_threshold.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="input-help-text">Get notified when stock falls below this value</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="mt-4 mb-4">
+                        
+                        <h5 class="mb-3"><i class="fas fa-dollar-sign mr-2"></i>Pricing Information</h5>
+                        
+                        <div class="row">
+                            <!-- Cost Price -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.cost_price.id_for_label }}">
+                                        Cost Price <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="price-input-group">
+                                        <span class="currency-symbol">$</span>
+                                        {{ form.cost_price }}
+                                    </div>
+                                    {% if form.cost_price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.cost_price.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="input-help-text">How much it costs to purchase/produce this item</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Selling Price -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.selling_price.id_for_label }}">
+                                        Selling Price <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="price-input-group">
+                                        <span class="currency-symbol">$</span>
+                                        {{ form.selling_price }}
+                                    </div>
+                                    {% if form.selling_price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.selling_price.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="input-help-text">How much you will sell this item for</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Profit Indicator (will be populated by JavaScript) -->
+                        <div id="profitIndicator" class="profit-indicator profit-neutral">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span id="profitText">Enter cost and selling prices to calculate profit margin</span>
+                        </div>
+                        
+                        <div class="text-right mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save mr-2"></i>Save Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips & Information Column -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Tips & Best Practices</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6><i class="fas fa-lightbulb text-warning mr-2"></i>Product Naming</h6>
+                        <p class="small">Use clear, consistent naming conventions for your products. Include key details like brand, model, or size in the name for easy identification.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-chart-line text-success mr-2"></i>Pricing Strategy</h6>
+                        <p class="small">A healthy profit margin typically ranges from 10% to 50% depending on your industry. Consider your market position and competition when setting prices.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-exclamation-triangle text-danger mr-2"></i>Stock Management</h6>
+                        <p class="small">Set appropriate low stock thresholds to ensure you never run out of popular items. Consider supplier lead times when setting these values.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span class="small">After adding a product, you can edit its details or update stock levels at any time from the inventory management page.</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recently Added Products</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for product in recent_products %}
+                        <a href="{% url 'view_product' product.id %}" class="list-group-item list-group-item-action px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ product.name }}</h6>
+                                <small>${{ product.selling_price }}</small>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Stock: {{ product.stock }}</small>
+                                <small class="text-muted">Added: {{ product.created_at|date:"M d, Y" }}</small>
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-box text-muted mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">No products added recently</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get references to price inputs and profit indicator
+        const costPriceInput = document.getElementById('{{ form.cost_price.id_for_label }}');
+        const sellingPriceInput = document.getElementById('{{ form.selling_price.id_for_label }}');
+        const profitIndicator = document.getElementById('profitIndicator');
+        const profitText = document.getElementById('profitText');
+        
+        // Function to calculate and display profit margin
+        function updateProfitMargin() {
+            const costPrice = parseFloat(costPriceInput.value) || 0;
+            const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
+            
+            // Calculate profit and margin
+            const profit = sellingPrice - costPrice;
+            const margin = costPrice > 0 ? (profit / costPrice) * 100 : 0;
+            
+            // Remove all classes first
+            profitIndicator.classList.remove('profit-positive', 'profit-negative', 'profit-neutral');
+            
+            // If both prices are entered, show profit information
+            if (costPrice > 0 && sellingPrice > 0) {
+                if (profit > 0) {
+                    profitIndicator.classList.add('profit-positive');
+                    profitText.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Profit: $${profit.toFixed(2)} | Margin: ${margin.toFixed(1)}%`;
+                } else if (profit < 0) {
+                    profitIndicator.classList.add('profit-negative');
+                    profitText.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i> Loss: $${Math.abs(profit).toFixed(2)} | Margin: ${margin.toFixed(1)}%`;
+                } else {
+                    profitIndicator.classList.add('profit-neutral');
+                    profitText.innerHTML = `<i class="fas fa-minus-circle mr-1"></i> Break-even price: $${costPrice.toFixed(2)}`;
+                }
+            } else {
+                // Default message when prices are not fully entered
+                profitIndicator.classList.add('profit-neutral');
+                profitText.innerHTML = `<i class="fas fa-info-circle mr-1"></i> Enter cost and selling prices to calculate profit margin`;
+            }
+        }
+        
+        // Add event listeners for price changes
+        costPriceInput.addEventListener('input', updateProfitMargin);
+        sellingPriceInput.addEventListener('input', updateProfitMargin);
+        
+        // Initialize form validation
+        const form = document.getElementById('productForm');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock %}

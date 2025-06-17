@@ -1,0 +1,609 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Shop Management System{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/css/bootstrap.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Base CSS -->
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding-top: 60px; /* For fixed navbar */
+            padding-bottom: 30px;
+        }
+        
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            min-height: calc(100vh - 56px);
+            position: fixed;
+            top: 56px;
+            left: 0;
+            width: 250px;
+            z-index: 100;
+            transition: all 0.3s;
+            box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-collapsed .sidebar {
+            margin-left: -250px;
+        }
+        
+        .sidebar-collapsed .main-content-wrapper {
+            margin-left: 0 !important;
+        }
+        
+        .main-content-wrapper {
+            margin-left: 250px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu {
+            padding: 0;
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            width: 100%;
+        }
+        
+        .sidebar-menu .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.8rem 1rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        
+        .sidebar-menu .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .sidebar-menu .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .sidebar-menu .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-divider {
+            height: 0;
+            margin: 0.5rem 0;
+            overflow: hidden;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .top-navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand img {
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .user-dropdown .dropdown-toggle::after {
+            display: none;
+        }
+        
+        .user-dropdown .dropdown-toggle {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .footer {
+            background-color: white;
+            padding: 1rem;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+            margin-top: auto;
+        }
+        
+        .breadcrumb {
+            background-color: transparent;
+            padding-left: 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            body {
+                padding-top: 56px;
+            }
+            .sidebar {
+                margin-left: -250px;
+            }
+            .main-content-wrapper {
+                margin-left: 0;
+            }
+            .sidebar.active {
+                margin-left: 0;
+            }
+            .overlay {
+                display: none;
+                position: fixed;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 90;
+                opacity: 0;
+                transition: all 0.5s ease-in-out;
+            }
+            .overlay.active {
+                display: block;
+                opacity: 1;
+            }
+        }
+        
+        /* Alert styles */
+        .alert-float {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            animation: slideInRight 0.5s forwards;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Extra styling: Cards, buttons, etc. */
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: white;
+            font-weight: 500;
+        }
+        
+        .btn {
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        /* Toggle button for sidebar on small screens */
+        #sidebarCollapse {
+            background: transparent;
+            border: none;
+            color: #333;
+            padding: 0.25rem 0.75rem;
+            font-size: 1.25rem;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="{% if sidebar_collapsed %}sidebar-collapsed{% endif %}">
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light top-navbar fixed-top">
+        <div class="container-fluid">
+            <!-- Sidebar Toggle Button -->
+            <button type="button" id="sidebarCollapse" class="navbar-toggler">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- Brand Logo -->
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-store text-primary"></i>
+                <span class="font-weight-bold">ShopManager</span>
+            </a>
+            
+            <!-- Top Navbar Items (Right Side) -->
+            <div class="ml-auto d-flex align-items-center">
+                <!-- Notifications -->
+                <div class="nav-item dropdown mr-3">
+                    <a class="nav-link position-relative" href="#" role="button" data-toggle="dropdown">
+                        <i class="fas fa-bell fa-lg"></i>
+                        {% if notifications_count %}
+                        <span class="badge badge-danger notification-badge">{{ notifications_count }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <h6 class="dropdown-header">Notifications</h6>
+                        {% if notifications %}
+                            {% for notification in notifications %}
+                            <a class="dropdown-item" href="{{ notification.link }}">
+                                <small class="text-muted">{{ notification.timestamp|timesince }} ago</small>
+                                <p class="mb-0">{{ notification.message }}</p>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            {% endfor %}
+                        {% else %}
+                            <span class="dropdown-item-text">No new notifications</span>
+                        {% endif %}
+                        <a class="dropdown-item text-center" href="#">See all notifications</a>
+                    </div>
+                </div>
+                
+                <!-- User Dropdown -->
+                <div class="nav-item dropdown user-dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+                        <div class="user-avatar">
+                            {{ request.user.username.0|upper }}
+                        </div>
+                        <span class="d-none d-lg-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <h6 class="dropdown-header">
+                            Signed in as <strong>{{ request.user.username }}</strong>
+                        </h6>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-user fa-fw mr-2"></i> Your Profile
+                        </a>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-cog fa-fw mr-2"></i> Settings
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt fa-fw mr-2"></i> Sign out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Container -->
+    <div class="container-fluid p-0">
+        <div class="row no-gutters">
+            <!-- Sidebar Navigation -->
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <h5 class="mb-0">{{ request.user.get_full_name|default:request.user.username }}</h5>
+                    <small class="text-light">
+                        {% if request.user.is_superuser %}
+                            Administrator
+                        {% elif request.user.groups.all.0.name == 'Owner' %}
+                            Owner
+                        {% elif request.user.groups.all.0.name == 'Manager' %}
+                            Manager
+                        {% elif request.user.groups.all.0.name == 'Shopkeeper' %}
+                            Shopkeeper
+                        {% else %}
+                            User
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <ul class="sidebar-menu nav flex-column">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'owner_dashboard' or request.resolver_match.url_name == 'shopkeeper_dashboard' %}active{% endif %}" 
+                            href="{% url 'redirect_dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- Sales Section -->
+                    <li class="sidebar-divider"></li>
+                    <div class="sidebar-heading pl-3 pr-3 mb-1 text-uppercase" style="font-size: 0.7rem; opacity: 0.6;">
+                        Sales
+                    </div>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'add_sale' %}active{% endif %}" href="{% url 'add_sale' %}">
+                            <i class="fas fa-cart-plus"></i> New Sale
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'manage_sales' %}active{% endif %}" href="{% url 'manage_sales' %}">
+                            <i class="fas fa-list-alt"></i> Sales Log
+                        </a>
+                    </li>
+                    
+                    <!-- Inventory Section -->
+                    <li class="sidebar-divider"></li>
+                    <div class="sidebar-heading pl-3 pr-3 mb-1 text-uppercase" style="font-size: 0.7rem; opacity: 0.6;">
+                        Inventory
+                    </div>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'manage_inventory' %}active{% endif %}" href="{% url 'manage_inventory' %}">
+                            <i class="fas fa-boxes"></i> All Products
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'add_product' %}active{% endif %}" href="{% url 'add_product' %}">
+                            <i class="fas fa-plus-circle"></i> Add Product
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'low_stock_items' %}active{% endif %}" href="#">
+                            <i class="fas fa-exclamation-triangle"></i> Low Stock
+                        </a>
+                    </li>
+                    
+                    <!-- Only show management sections to staff/admin users -->
+                    {% if request.user.is_staff or request.user.is_superuser or request.user.groups.all.0.name == 'Owner' or request.user.groups.all.0.name == 'Manager' %}
+                    <!-- Management Section -->
+                    <li class="sidebar-divider"></li>
+                    <div class="sidebar-heading pl-3 pr-3 mb-1 text-uppercase" style="font-size: 0.7rem; opacity: 0.6;">
+                        Management
+                    </div>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'manage_shopkeepers' %}active{% endif %}" href="#">
+                            <i class="fas fa-users"></i> Shopkeepers
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'view_branches' %}active{% endif %}" href="#">
+                            <i class="fas fa-store"></i> Branches
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'reports_view' %}active{% endif %}" href="#">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    
+                    <!-- Admin Section (superuser only) -->
+                    {% if request.user.is_superuser %}
+                    <li class="sidebar-divider"></li>
+                    <div class="sidebar-heading pl-3 pr-3 mb-1 text-uppercase" style="font-size: 0.7rem; opacity: 0.6;">
+                        Administration
+                    </div>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:index' %}" target="_blank">
+                            <i class="fas fa-toolbox"></i> Admin Panel
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'settings_view' %}active{% endif %}" href="#">
+                            <i class="fas fa-cogs"></i> System Settings
+                        </a>
+                    </li>
+                    {% endif %}
+                    <!-- End admin section -->
+                    {% endif %}
+                    <!-- End management section -->
+                    
+                    <!-- Help/Support Section -->
+                    <li class="sidebar-divider"></li>
+                    <div class="sidebar-heading pl-3 pr-3 mb-1 text-uppercase" style="font-size: 0.7rem; opacity: 0.6;">
+                        Help
+                    </div>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-toggle="modal" data-target="#helpModal">
+                            <i class="fas fa-question-circle"></i> Help & Support
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Sidebar Footer -->
+                <div class="mt-auto p-3">
+                    <small class="text-muted">
+                        &copy; 2025 Shop Management System
+                        <br>v1.0.0
+                    </small>
+                </div>
+            </nav>
+            
+            <!-- Page Content -->
+            <div class="main-content-wrapper flex-fill">
+                <div class="main-content p-3">
+                    <!-- Flash Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Main Content Block -->
+                    {% block content %}{% endblock %}
+                </div>
+                
+                <!-- Footer -->
+                <footer class="footer">
+                    <div class="container">
+                        <span class="text-muted">&copy; 2025 Shop Management System. All rights reserved.</span>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overlay for sidebar on mobile -->
+    <div class="overlay"></div>
+    
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="helpModalLabel">Help & Support</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="font-weight-bold">Quick Help</h6>
+                    <p>For assistance with using the Shop Management System, please refer to the following resources:</p>
+                    <ul>
+                        <li>Check the <a href="#">User Guide</a> for detailed instructions</li>
+                        <li>View <a href="#">Video Tutorials</a> for visual guidance</li>
+                        <li>Browse the <a href="#">FAQ Section</a> for common questions</li>
+                    </ul>
+                    
+                    <h6 class="font-weight-bold mt-4">Contact Support</h6>
+                    <p>If you need additional help, please contact our support team:</p>
+                    <p>
+                        <i class="fas fa-envelope mr-2"></i> support@shopmanager.com<br>
+                        <i class="fas fa-phone mr-2"></i> +1 (555) 123-4567<br>
+                        <i class="fas fa-clock mr-2"></i> Mon-Fri, 9:00 AM - 5:00 PM
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <a href="#" class="btn btn-primary">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.7/umd/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.min.js"></script>
+    
+    <!-- Base JS -->
+    <script>
+        $(document).ready(function() {
+            // Sidebar toggle functionality for mobile
+            $('#sidebarCollapse').on('click', function() {
+                $('.sidebar').toggleClass('active');
+                $('.overlay').toggleClass('active');
+                $('body').toggleClass('sidebar-collapsed');
+            });
+            
+            // Close sidebar when clicking on overlay (mobile)
+            $('.overlay').on('click', function() {
+                $('.sidebar').removeClass('active');
+                $('.overlay').removeClass('active');
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            $('.alert').delay(5000).fadeOut(500);
+            
+            // Enable tooltips
+            $('[data-toggle="tooltip"]').tooltip();
+            
+            // Enable popovers
+            $('[data-toggle="popover"]').popover();
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
