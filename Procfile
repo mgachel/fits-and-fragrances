@@ -1,1 +1,1 @@
-web: cd /opt/render/project/src && export PYTHONPATH=$PYTHONPATH:/opt/render/project/src && gunicorn fits_and_fragrances_manager.wsgi:application --bind 0.0.0.0:$PORT 
+web: gunicorn fits_and_fragrances_manager.wsgi
